@@ -20,7 +20,7 @@ Este repositorio contiene la solución completa para la prueba técnica solicita
 
 ### Funcionalidades
 - Registro de usuarios con los siguientes campos:
-  - Nombre, Apellido, Correo electrónico, Fecha de nacimiento, Teléfono (opcional), País (ISO 3166-1), ¿Desea recibir información?
+  - Nombre, Apellido, Correo electrónico, Fecha de nacimiento, Teléfono (opcional)
 - Visualización de un historial de actividades por cada acción sobre un usuario.
 - Navegación entre módulos mediante una barra (NavBar).
 
@@ -39,7 +39,9 @@ Este repositorio contiene la solución completa para la prueba técnica solicita
 
 ## 🗃️ Base de Datos
 
-La solución usa SQL Server como motor de base de datos. Los scripts necesarios para crear la base de datos, tablas y procedimientos almacenados están ubicados en la carpeta [`/database`](./database).
+La solución usa SQL Server como motor de base de datos. Los scripts necesarios para crear la base de datos a modo de demostracion de conocimiento se creo un script para tablas y procedimientos almacenados.
+
+están ubicados en la carpeta [`/database`](./database).
 
 ### Tablas:
 - `usuarios`
@@ -59,6 +61,7 @@ cd CrudUsers
 
 ### 2. Crear la base de datos
 simplemente levantar el proyecto back-end, y EF Core Code First creará la base de datos automáticamente con Database.Migrate().
+(Solo asegurar que la cadena de coneccion del Appsettings este correcta)
 
 ### 3. Levantar el back-end
 ```bash
