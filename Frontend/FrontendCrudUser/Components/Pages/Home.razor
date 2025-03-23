@@ -1,7 +1,33 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<div class="container mt-4">
+    <h1 class="mb-3">Bienvenido al Sistema de Gestión de Usuarios</h1>
 
-<h1>Hello, world!</h1>
+    <p class="lead">
+        Esta aplicación permite registrar usuarios y visualizar un historial de actividades asociadas a ellos.
+    </p>
 
-Welcome to your new app.
+    <hr />
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">📋 Gestión de Usuarios</h5>
+                    <p class="card-text">Agregá, editá y eliminá usuarios desde un panel intuitivo.</p>
+                    <NavLink class="btn btn-primary" href="/usuarios">Ir a Usuarios</NavLink>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mt-4 mt-md-0">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">🕓 Historial de Actividades</h5>
+                    <p class="card-text">Consultá las acciones realizadas recientemente sobre los usuarios.</p>
+                    <NavLink class="btn btn-secondary" href="/actividades">Ver Actividades</NavLink>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

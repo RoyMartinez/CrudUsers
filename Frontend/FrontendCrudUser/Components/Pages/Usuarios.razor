@@ -1,0 +1,207 @@
+﻿@page "/usuarios"
+@using FrontendCrudUser.Dtos
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h3>Gestión de Usuarios</h3>
+
+@if (usuarios == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <button class="btn btn-primary mb-3" @onclick="NuevoUsuario">Nuevo Usuario</button>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>País</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var usuario in usuarios)
+            {
+                <tr>
+                    <td>@usuario.Nombre</td>
+                    <td>@usuario.Apellido</td>
+                    <td>@usuario.Correo</td>
+                    <td>@usuario.Telefono</td>
+                    <td>@usuario.PaisResidencia</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" @onclick="() => EditarUsuario(usuario)">Editar</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => EliminarUsuario(usuario.Id)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <button class="btn btn-secondary" @onclick="PaginaAnterior" disabled="@(!PuedeRetroceder)">Anterior</button>
+        <span>Página @paginaActual de @totalPaginas</span>
+        <button class="btn btn-secondary" @onclick="PaginaSiguiente" disabled="@(!PuedeAvanzar)">Siguiente</button>
+    </div>
+
+    @if (formVisible)
+    {
+        <hr />
+        <EditForm Model="usuarioEditando" OnValidSubmit="GuardarUsuario">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group mb-2">
+                <label for="nombre">Nombre</label>
+                <InputText id="nombre" class="form-control" @bind-Value="usuarioEditando.Nombre" />
+            </div>
+
+            <div class="form-group mb-2">
+                <label for="apellido">Apellido</label>
+                <InputText id="apellido" class="form-control" @bind-Value="usuarioEditando.Apellido" />
+            </div>
+
+            <div class="form-group mb-2">
+                <label for="correo">Correo</label>
+                <InputText id="correo" class="form-control" @bind-Value="usuarioEditando.Correo" />
+            </div>
+
+            <div class="form-group mb-2">
+                <label for="telefono">Teléfono</label>
+                <InputNumber id="telefono" class="form-control" @bind-Value="usuarioEditando.Telefono" />
+            </div>
+
+            <div class="form-group mb-2">
+                <label for="pais">País de Residencia</label>
+                <InputText id="pais" class="form-control" @bind-Value="usuarioEditando.PaisResidencia" />
+            </div>
+
+            <button class="btn btn-success mt-2" type="submit">Guardar</button>
+            <button class="btn btn-secondary mt-2 ms-2" @onclick="Cancelar">Cancelar</button>
+        </EditForm>
+    }
+}
+
+@code {
+    private List<UsuarioDto>? usuarios;
+    private UsuarioDto usuarioEditando = new();
+    private bool formVisible = false;
+
+    private int paginaActual = 1;
+    private int pageSize = 10;
+    private int totalPaginas;
+
+    private bool PuedeRetroceder => paginaActual > 1;
+    private bool PuedeAvanzar => paginaActual < totalPaginas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarUsuarios();
+    }
+    private async Task CargarUsuarios()
+    {
+        var url = $"api/usuarios?pageSize={pageSize}&pageNumber={paginaActual}";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("X-API-KEY", "api-key-segura");
+
+        var response = await Http.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadFromJsonAsync<UsuariosResponseWrapper>();
+            usuarios = json?.Items ?? new();
+            totalPaginas = json?.Metadata.TotalPages ?? 1;
+
+            if (paginaActual > totalPaginas)
+            {
+                paginaActual = totalPaginas;
+                if (paginaActual < 1)
+                    paginaActual = 1;
+
+                await CargarUsuarios();
+                return;
+            }
+        }
+    }
+    private void NuevoUsuario()
+    {
+        usuarioEditando = new UsuarioDto
+            {
+                Telefono = 0
+            };
+        formVisible = true;
+        StateHasChanged();
+    }
+
+    private void EditarUsuario(UsuarioDto usuario)
+    {
+        usuarioEditando = new UsuarioDto
+            {
+                Id = usuario.Id,
+                Nombre = usuario.Nombre,
+                Apellido = usuario.Apellido,
+                Correo = usuario.Correo,
+                Telefono = usuario.Telefono,
+                PaisResidencia = usuario.PaisResidencia
+            };
+        formVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task GuardarUsuario()
+    {
+        var method = usuarioEditando.Id == 0 ? HttpMethod.Post : HttpMethod.Put;
+        var url = method == HttpMethod.Post ? "api/usuarios" : $"api/usuarios/{usuarioEditando.Id}";
+
+        var request = new HttpRequestMessage(method, url)
+            {
+                Content = JsonContent.Create(usuarioEditando)
+            };
+        request.Headers.Add("X-API-KEY", "api-key-segura");
+
+        var response = await Http.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            formVisible = false;
+            await CargarUsuarios();
+            StateHasChanged();
+        }
+    }
+    private async Task EliminarUsuario(int id)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"api/usuarios/{id}");
+        request.Headers.Add("X-API-KEY", "api-key-segura");
+
+        var response = await Http.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            formVisible = false;
+            await CargarUsuarios();
+            StateHasChanged();
+        }
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+
+    private void Cancelar() => formVisible = false;
+
+    private async Task PaginaAnterior()
+    {
+        if (PuedeRetroceder)
+        {
+            paginaActual--;
+            await CargarUsuarios();
+        }
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (PuedeAvanzar)
+        {
+            paginaActual++;
+            await CargarUsuarios();
+        }
+    }
+}

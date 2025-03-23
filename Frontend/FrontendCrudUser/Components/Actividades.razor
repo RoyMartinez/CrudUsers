@@ -1,0 +1,92 @@
+﻿@page "/actividades"
+@using FrontendCrudUser.Dtos
+@rendermode InteractiveServer
+@inject HttpClient Http
+<h3>Historial de Actividades</h3>
+
+@if (actividades == null)
+{
+    <p><em>Cargando actividades...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Detalle</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in actividades)
+            {
+                <tr>
+                    <td>@item.FechaCreacion.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@item.NombreUsuario (@item.UsuarioId)</td>
+                    <td>@item.Actividad</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <button class="btn btn-secondary" @onclick="PaginaAnterior" disabled="@(!PuedeRetroceder)">Anterior</button>
+        <span>Página @paginaActual de @totalPaginas</span>
+        <button class="btn btn-secondary" @onclick="PaginaSiguiente" disabled="@(!PuedeAvanzar)">Siguiente</button>
+    </div>
+}
+
+@code {
+    private List<ActividadesResponse>? actividades;
+    private int paginaActual = 1;
+    private int pageSize = 10;
+    private int totalPaginas;
+
+    private bool PuedeRetroceder => paginaActual > 1;
+    private bool PuedeAvanzar => paginaActual < totalPaginas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarActividades();
+    }
+
+    private async Task CargarActividades()
+    {
+        var url = $"api/actividades?pageSize={pageSize}&pageNumber={paginaActual}";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("X-API-KEY", "api-key-segura");
+
+        var response = await Http.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadFromJsonAsync<ActividadesResponseWrapper>();
+            actividades = json?.Items ?? new();
+            totalPaginas = json?.Metadata.TotalPages ?? 1;
+
+            if (paginaActual > totalPaginas)
+            {
+                paginaActual = totalPaginas < 1 ? 1 : totalPaginas;
+                await CargarActividades();
+            }
+        }
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (PuedeRetroceder)
+        {
+            paginaActual--;
+            await CargarActividades();
+        }
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (PuedeAvanzar)
+        {
+            paginaActual++;
+            await CargarActividades();
+        }
+    }
+}
