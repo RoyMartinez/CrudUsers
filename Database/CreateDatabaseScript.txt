@@ -1,0 +1,118 @@
+-- Crear base de datos
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'LoymarkTest')
+BEGIN
+    CREATE DATABASE LoymarkTest;
+END
+GO
+
+USE LoymarkTest;
+GO
+
+-- Crear tabla usuarios
+IF OBJECT_ID('usuarios', 'U') IS NOT NULL
+    DROP TABLE usuarios;
+GO
+
+CREATE TABLE usuarios (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre NVARCHAR(50) NOT NULL,
+    apellido NVARCHAR(50) NOT NULL,
+    correo NVARCHAR(100) NOT NULL UNIQUE,
+    fecha_nacimiento DATE NOT NULL,
+    telefono NVARCHAR(20) NULL,
+    pais_residencia CHAR(3) NOT NULL,
+    desea_contacto BIT NOT NULL
+);
+GO
+
+-- Crear tabla actividades
+IF OBJECT_ID('actividades', 'U') IS NOT NULL
+    DROP TABLE actividades;
+GO
+
+CREATE TABLE actividades (
+    id_actividad INT IDENTITY(1,1) PRIMARY KEY,
+    create_date DATETIME DEFAULT GETDATE() NOT NULL,
+    id_usuario INT NOT NULL,
+    actividad NVARCHAR(100) NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+);
+GO
+
+-- ======================
+-- Procedimientos Almacenados
+-- ======================
+
+-- Agregar usuario
+IF OBJECT_ID('sp_agregar_usuario') IS NOT NULL
+    DROP PROCEDURE sp_agregar_usuario;
+GO
+
+CREATE PROCEDURE sp_agregar_usuario
+    @nombre NVARCHAR(50),
+    @apellido NVARCHAR(50),
+    @correo NVARCHAR(100),
+    @fecha_nacimiento DATE,
+    @telefono NVARCHAR(20) = NULL,
+    @pais_residencia CHAR(3),
+    @desea_contacto BIT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO usuarios (nombre, apellido, correo, fecha_nacimiento, telefono, pais_residencia, desea_contacto)
+    VALUES (@nombre, @apellido, @correo, @fecha_nacimiento, @telefono, @pais_residencia, @desea_contacto);
+
+    DECLARE @newUserId INT = SCOPE_IDENTITY();
+
+    INSERT INTO actividades (id_usuario, actividad)
+    VALUES (@newUserId, 'Creación de Usuario');
+END;
+GO
+
+-- Obtener todos los usuarios
+IF OBJECT_ID('sp_obtener_usuarios') IS NOT NULL
+    DROP PROCEDURE sp_obtener_usuarios;
+GO
+
+CREATE PROCEDURE sp_obtener_usuarios
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT * FROM usuarios;
+END;
+GO
+
+-- Editar usuario
+IF OBJECT_ID('sp_editar_usuario') IS NOT NULL
+    DROP PROCEDURE sp_editar_usuario;
+GO
+
+CREATE PROCEDURE sp_editar_usuario
+    @id INT,
+    @nombre NVARCHAR(50) = NULL,
+    @apellido NVARCHAR(50) = NULL,
+    @correo NVARCHAR(100) = NULL,
+    @fecha_nacimiento DATE = NULL,
+    @telefono NVARCHAR(20) = NULL,
+    @pais_residencia CHAR(3) = NULL,
+    @desea_contacto BIT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE usuarios
+    SET
+        nombre = ISNULL(@nombre, nombre),
+        apellido = ISNULL(@apellido, apellido),
+        correo = ISNULL(@correo, correo),
+        fecha_nacimiento = ISNULL(@fecha_nacimiento, fecha_nacimiento),
+        telefono = ISNULL(@telefono, telefono),
+        pais_residencia = ISNULL(@pais_residencia, pais_residencia),
+        desea_contacto = ISNULL(@desea_contacto, desea_contacto)
+    WHERE id = @id;
+
+    INSERT INTO actividades (id_usuario, actividad)
+    VALUES (@id, 'Actualización de Usuario');
+END;
+GO
