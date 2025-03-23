@@ -55,7 +55,7 @@ Cada acción CRUD sobre `usuarios` se registra automáticamente en la tabla `act
 
 ### 1. Clonar Repositorio
 ```bash
-git clone https://github.com/tu-usuario/loymark-test.git
+git clone https://github.com/RoyMartinez/CrudUsers.git
 cd CrudUsers
 ```
 
